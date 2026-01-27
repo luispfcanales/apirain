@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "env": {
+    "GO111MODULE": "on"
+  },
+  "rewrites": [
+    { "source": "/api/mantenimiento/teams", "destination": "/api/mantenimiento/teams/index.go" },
+    { "source": "/api/mantenimiento/requests", "destination": "/api/mantenimiento/requests/index.go" },
+    { "source": "/api/mantenimiento/equipment", "destination": "/api/mantenimiento/equipment/index.go" }
+  ]
+}
