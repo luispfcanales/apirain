@@ -22,6 +22,11 @@ type MaintenanceRequest struct {
 	ScheduleDate      any `json:"schedule_date" xmlrpc:"schedule_date"`
 	EquipmentID       any `json:"equipment_id" xmlrpc:"equipment_id"`
 	CorrectiveDate    any `json:"corrective_date" xmlrpc:"corrective_date"`
+	RepeatInterval    any `json:"repeat_interval" xmlrpc:"repeat_interval"`
+	RecurrenceType    any `json:"recurrence_type" xmlrpc:"recurrence_type"`
+	RecurrenceValue   any `json:"recurrence_value" xmlrpc:"recurrence_value"`
+	RepeatType        any `json:"repeat_type" xmlrpc:"repeat_type"`
+	RepeatUnit        any `json:"repeat_unit" xmlrpc:"repeat_unit"`
 }
 
 func (mr *MaintenanceRequest) GetTeamID() int {

@@ -73,8 +73,21 @@ func (c *OdooClient) GetMaintenanceTeams() ([]models.MaintenanceTeam, error) {
 func (c *OdooClient) GetMaintenanceRequests() ([]models.MaintenanceRequest, error) {
 	var requests []models.MaintenanceRequest
 	err := c.call("maintenance.request", "search_read", []interface{}{[]interface{}{}}, map[string]interface{}{
-		"fields": []string{"name", "maintenance_team_id", "stage_id", "priority", "schedule_date", "equipment_id", "corrective_date"},
-		"limit":  100,
+		"fields": []string{
+			"name",
+			"maintenance_team_id",
+			"stage_id",
+			"priority",
+			"schedule_date",
+			"equipment_id",
+			"corrective_date",
+			"repeat_interval",
+			"recurrence_type",
+			"recurrence_value",
+			"repeat_type",
+			"repeat_unit",
+		},
+		"limit": 100,
 	}, &requests)
 	return requests, err
 }
