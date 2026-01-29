@@ -27,6 +27,7 @@ type MaintenanceRequest struct {
 	RecurrenceValue   any `json:"recurrence_value" xmlrpc:"recurrence_value"`
 	RepeatType        any `json:"repeat_type" xmlrpc:"repeat_type"`
 	RepeatUnit        any `json:"repeat_unit" xmlrpc:"repeat_unit"`
+	Archive           any `json:"archive" xmlrpc:"archive"`
 }
 
 func (mr *MaintenanceRequest) GetTeamID() int {
