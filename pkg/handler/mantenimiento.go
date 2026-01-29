@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"sort"
 	"time"
@@ -38,6 +39,7 @@ func (h *MaintenanceHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 
 	teams, err := h.odoo.GetMaintenanceTeams()
 	if err != nil {
+		log.Printf("Error [ListTeams]: %v", err)
 		response.InternalServerError(w, "Error obteniendo equipos")
 		return
 	}
@@ -87,6 +89,7 @@ func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request
 	// Obtener todos los equipos de mantenimiento
 	teams, err := h.odoo.GetMaintenanceTeams()
 	if err != nil {
+		log.Printf("Error [ListRequests - GetMaintenanceTeams]: %v", err)
 		response.InternalServerError(w, "Error obteniendo equipos de mantenimiento")
 		return
 	}
@@ -94,6 +97,7 @@ func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request
 	// Obtener todas las solicitudes
 	requests, err := h.odoo.GetMaintenanceRequests()
 	if err != nil {
+		log.Printf("Error [ListRequests - GetMaintenanceRequests]: %v", err)
 		response.InternalServerError(w, "Error obteniendo solicitudes")
 		return
 	}
@@ -185,6 +189,7 @@ func (h *MaintenanceHandler) ListEquipment(w http.ResponseWriter, r *http.Reques
 
 	equipment, err := h.odoo.GetMaintenanceEquipment()
 	if err != nil {
+		log.Printf("Error [ListEquipment]: %v", err)
 		response.InternalServerError(w, "Error obteniendo activos")
 		return
 	}

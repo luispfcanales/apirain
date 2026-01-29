@@ -14,14 +14,14 @@ type MaintenanceEquipment struct {
 }
 
 type MaintenanceRequest struct {
-	ID                int    `json:"id" xmlrpc:"id"`
-	Name              string `json:"name" xmlrpc:"name"`
-	MaintenanceTeamID any    `json:"maintenance_team_id" xmlrpc:"maintenance_team_id"`
-	StageID           any    `json:"stage_id" xmlrpc:"stage_id"`
-	Priority          string `json:"priority" xmlrpc:"priority"`
-	ScheduleDate      any    `json:"schedule_date" xmlrpc:"schedule_date"`
-	EquipmentID       any    `json:"equipment_id" xmlrpc:"equipment_id"`
-	CorrectiveDate    any    `json:"corrective_date" xmlrpc:"corrective_date"`
+	ID                any `json:"id" xmlrpc:"id"`
+	Name              any `json:"name" xmlrpc:"name"`
+	MaintenanceTeamID any `json:"maintenance_team_id" xmlrpc:"maintenance_team_id"`
+	StageID           any `json:"stage_id" xmlrpc:"stage_id"`
+	Priority          any `json:"priority" xmlrpc:"priority"`
+	ScheduleDate      any `json:"schedule_date" xmlrpc:"schedule_date"`
+	EquipmentID       any `json:"equipment_id" xmlrpc:"equipment_id"`
+	CorrectiveDate    any `json:"corrective_date" xmlrpc:"corrective_date"`
 }
 
 func (mr *MaintenanceRequest) GetTeamID() int {
