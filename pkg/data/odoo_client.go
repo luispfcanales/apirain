@@ -87,6 +87,8 @@ func (c *OdooClient) GetMaintenanceRequests() ([]models.MaintenanceRequest, erro
 			"repeat_type",
 			"repeat_unit",
 			"archive",
+			"request_date",
+			"used_value",
 		},
 		"limit": 100,
 	}, &requests)

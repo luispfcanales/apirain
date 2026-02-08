@@ -28,6 +28,8 @@ type MaintenanceRequest struct {
 	RepeatType        any `json:"repeat_type" xmlrpc:"repeat_type"`
 	RepeatUnit        any `json:"repeat_unit" xmlrpc:"repeat_unit"`
 	Archive           any `json:"archive" xmlrpc:"archive"`
+	RequestDate       any `json:"request_date" xmlrpc:"request_date"`
+	UsedValue         any `json:"used_value" xmlrpc:"used_value"`
 }
 
 func (mr *MaintenanceRequest) GetTeamID() int {
