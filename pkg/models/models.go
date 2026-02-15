@@ -29,6 +29,7 @@ type MaintenanceRequest struct {
 	RepeatUnit        any `json:"repeat_unit" xmlrpc:"repeat_unit"`
 	Archive           any `json:"archive" xmlrpc:"archive"`
 	RequestDate       any `json:"request_date" xmlrpc:"request_date"`
+	PreventiveDate    any `json:"preventive_date" xmlrpc:"preventive_date"`
 	UsedValue         any `json:"used_value" xmlrpc:"used_value"`
 }
 

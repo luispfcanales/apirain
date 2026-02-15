@@ -3,20 +3,21 @@ package data
 import (
 	"fmt"
 
-	"github.com/luispfcanales/apirain/pkg/config"
 	"github.com/luispfcanales/apirain/pkg/models"
 
 	"github.com/kolo/xmlrpc"
 )
 
 type OdooClient struct {
-	cfg      *config.Config
-	uid      int
+	url      string
+	db       string
+	username string
 	password string
+	uid      int
 }
 
-func NewOdooClient(cfg *config.Config) (*OdooClient, error) {
-	commonClient, err := xmlrpc.NewClient(cfg.OdooURL+"/xmlrpc/2/common", nil)
+func NewOdooClient(url, db, username, password string) (*OdooClient, error) {
+	commonClient, err := xmlrpc.NewClient(url+"/xmlrpc/2/common", nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating common client: %w", err)
 	}
@@ -24,9 +25,9 @@ func NewOdooClient(cfg *config.Config) (*OdooClient, error) {
 
 	var uid int
 	err = commonClient.Call("authenticate", []interface{}{
-		cfg.OdooDB,
-		cfg.OdooUsername,
-		cfg.OdooPassword,
+		db,
+		username,
+		password,
 		map[string]interface{}{},
 	}, &uid)
 	if err != nil {
@@ -38,21 +39,23 @@ func NewOdooClient(cfg *config.Config) (*OdooClient, error) {
 	}
 
 	return &OdooClient{
-		cfg:      cfg,
+		url:      url,
+		db:       db,
+		username: username,
+		password: password,
 		uid:      uid,
-		password: cfg.OdooPassword,
 	}, nil
 }
 
 func (c *OdooClient) call(model, method string, args []interface{}, kwargs map[string]interface{}, reply interface{}) error {
-	modelsClient, err := xmlrpc.NewClient(c.cfg.OdooURL+"/xmlrpc/2/object", nil)
+	modelsClient, err := xmlrpc.NewClient(c.url+"/xmlrpc/2/object", nil)
 	if err != nil {
 		return fmt.Errorf("error creating models client: %w", err)
 	}
 	defer modelsClient.Close()
 
 	return modelsClient.Call("execute_kw", []interface{}{
-		c.cfg.OdooDB,
+		c.db,
 		c.uid,
 		c.password,
 		model,
@@ -88,6 +91,7 @@ func (c *OdooClient) GetMaintenanceRequests() ([]models.MaintenanceRequest, erro
 			"repeat_unit",
 			"archive",
 			"request_date",
+			"preventive_date",
 			"used_value",
 		},
 		"limit": 100,

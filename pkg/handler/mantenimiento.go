@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -13,7 +14,8 @@ import (
 )
 
 type MaintenanceHandler struct {
-	odoo *data.OdooClient
+	odoo    *data.OdooClient
+	odooDev *data.OdooClient
 }
 
 type GroupedRequestsWithTeam struct {
@@ -23,11 +25,28 @@ type GroupedRequestsWithTeam struct {
 }
 
 func NewMaintenanceHandler(cfg *config.Config) (*MaintenanceHandler, error) {
-	odoo, err := data.NewOdooClient(cfg)
+	odoo, err := data.NewOdooClient(cfg.OdooURL, cfg.OdooDB, cfg.OdooUsername, cfg.OdooPassword)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error connecting to Odoo Prod: %w", err)
 	}
-	return &MaintenanceHandler{odoo: odoo}, nil
+
+	odooDev, err := data.NewOdooClient(cfg.OdooURLDev, cfg.OdooDBDev, cfg.OdooUsername, cfg.OdooPasswordDev)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to Odoo Dev: %w", err)
+	}
+
+	return &MaintenanceHandler{
+		odoo:    odoo,
+		odooDev: odooDev,
+	}, nil
+}
+
+func (h *MaintenanceHandler) getOdooClient(r *http.Request) *data.OdooClient {
+	base := r.URL.Query().Get("base")
+	if base == "prod" {
+		return h.odoo
+	}
+	return h.odooDev
 }
 
 func (h *MaintenanceHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +56,8 @@ func (h *MaintenanceHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	teams, err := h.odoo.GetMaintenanceTeams()
+	client := h.getOdooClient(r)
+	teams, err := client.GetMaintenanceTeams()
 	if err != nil {
 		log.Printf("Error [ListTeams]: %v", err)
 		response.InternalServerError(w, "Error obteniendo equipos")
@@ -86,8 +106,10 @@ func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	client := h.getOdooClient(r)
+
 	// Obtener todos los equipos de mantenimiento
-	teams, err := h.odoo.GetMaintenanceTeams()
+	teams, err := client.GetMaintenanceTeams()
 	if err != nil {
 		log.Printf("Error [ListRequests - GetMaintenanceTeams]: %v", err)
 		response.InternalServerError(w, "Error obteniendo equipos de mantenimiento")
@@ -95,7 +117,7 @@ func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request
 	}
 
 	// Obtener todas las solicitudes
-	requests, err := h.odoo.GetMaintenanceRequests()
+	requests, err := client.GetMaintenanceRequests()
 	if err != nil {
 		log.Printf("Error [ListRequests - GetMaintenanceRequests]: %v", err)
 		response.InternalServerError(w, "Error obteniendo solicitudes")
@@ -187,7 +209,8 @@ func (h *MaintenanceHandler) ListEquipment(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	equipment, err := h.odoo.GetMaintenanceEquipment()
+	client := h.getOdooClient(r)
+	equipment, err := client.GetMaintenanceEquipment()
 	if err != nil {
 		log.Printf("Error [ListEquipment]: %v", err)
 		response.InternalServerError(w, "Error obteniendo activos")
