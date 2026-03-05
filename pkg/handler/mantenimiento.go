@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"sort"
 	"time"
@@ -99,6 +100,132 @@ func (h *MaintenanceHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 
 //		response.JSON(w, http.StatusOK, requests)
 //	}
+
+// toFloat64 convierte un valor any a float64 de forma segura.
+func toFloat64(v any) (float64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return n, true
+	case int:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	}
+	return 0, false
+}
+
+// toString extrae un string de un campo any (puede ser string o false en Odoo).
+func toString(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
+}
+
+// clamp100 limita un valor al rango [0, 100] y redondea a 2 decimales.
+func clamp100(v float64) float64 {
+	if v > 100 {
+		v = 100
+	}
+	if v < 0 {
+		v = 0
+	}
+	return math.Round(v*100) / 100
+}
+
+// calculateProgress calcula el porcentaje de avance de una solicitud de mantenimiento.
+// Las fechas de ScheduleDate y CorrectiveDate ya deben estar convertidas a hora local (loc).
+func calculateProgress(req *models.MaintenanceRequest, loc *time.Location) float64 {
+	recurrenceType := toString(req.RecurrenceType)
+	repeatUnit := toString(req.RepeatUnit)
+
+	// --- POR HORAS ---
+	if recurrenceType == "hours" || recurrenceType == "hour" ||
+		repeatUnit == "hours" || repeatUnit == "hour" {
+		usedValue, okUsed := toFloat64(req.UsedValue)
+		recurrenceValue, okRec := toFloat64(req.RecurrenceValue)
+		if !okUsed || !okRec || recurrenceValue == 0 {
+			return 0
+		}
+		return clamp100((usedValue / recurrenceValue) * 100)
+	}
+
+	// --- POR FECHA ---
+	const dateFmt = "2006-01-02 15:04:05"
+	const dayFmt = "2006-01-02"
+
+	// Fecha inicio: request_date (solo fecha) o corrective_date
+	var startDate time.Time
+	hasStart := false
+	if rdStr := toString(req.RequestDate); rdStr != "" {
+		t, err := time.ParseInLocation(dayFmt, rdStr, loc)
+		if err == nil {
+			startDate = t
+			hasStart = true
+		}
+	}
+	if !hasStart {
+		if cdStr := toString(req.CorrectiveDate); cdStr != "" {
+			t, err := time.ParseInLocation(dateFmt, cdStr, loc)
+			if err == nil {
+				startDate = t
+				hasStart = true
+			}
+		}
+	}
+
+	// Fecha fin: preventive_date, sino schedule_date, sino corrective_date
+	var targetDate time.Time
+	hasTarget := false
+	if pdStr := toString(req.PreventiveDate); pdStr != "" {
+		t, err := time.ParseInLocation(dateFmt, pdStr, loc)
+		if err == nil {
+			targetDate = t
+			hasTarget = true
+		}
+	}
+	if !hasTarget {
+		if sdStr, ok := req.ScheduleDate.(string); ok && sdStr != "" {
+			t, err := time.ParseInLocation(dateFmt, sdStr, loc)
+			if err == nil {
+				targetDate = t
+				hasTarget = true
+			}
+		}
+	}
+	if !hasTarget {
+		if cdStr := toString(req.CorrectiveDate); cdStr != "" {
+			t, err := time.ParseInLocation(dateFmt, cdStr, loc)
+			if err == nil {
+				targetDate = t
+				hasTarget = true
+			}
+		}
+	}
+
+	if !hasStart || !hasTarget {
+		return 0
+	}
+
+	now := time.Now().In(loc)
+
+	if now.After(targetDate) || now.Equal(targetDate) {
+		return 100
+	}
+
+	totalDuration := targetDate.Sub(startDate)
+	if totalDuration <= 0 {
+		return 0
+	}
+
+	elapsed := now.Sub(startDate)
+	if elapsed < 0 {
+		elapsed = 0
+	}
+
+	return clamp100((float64(elapsed) / float64(totalDuration)) * 100)
+}
+
 func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
 	response.SetupCORS(w)
 	if r.Method == http.MethodOptions {
@@ -143,6 +270,9 @@ func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request
 				requests[i].CorrectiveDate = t.In(loc).Format("2006-01-02 15:04:05")
 			}
 		}
+
+		// Calcular progreso DESPUÉS de la conversión de zona horaria
+		requests[i].Progress = calculateProgress(&requests[i], loc)
 	}
 
 	// Agrupar las solicitudes por equipo
