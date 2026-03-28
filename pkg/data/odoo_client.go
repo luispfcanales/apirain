@@ -94,7 +94,6 @@ func (c *OdooClient) GetMaintenanceRequests() ([]models.MaintenanceRequest, erro
 			"preventive_date",
 			"used_value",
 		},
-		"limit": 100,
 	}, &requests)
 	return requests, err
 }
@@ -103,7 +102,6 @@ func (c *OdooClient) GetMaintenanceEquipment() ([]models.MaintenanceEquipment, e
 	var equipment []models.MaintenanceEquipment
 	err := c.call("maintenance.equipment", "search_read", []interface{}{[]interface{}{}}, map[string]interface{}{
 		"fields": []string{"name", "maintenance_team_id", "category_id", "location"},
-		"limit":  100,
 	}, &equipment)
 	return equipment, err
 }

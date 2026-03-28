@@ -6,6 +6,7 @@ import (
 	"math"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/luispfcanales/apirain/pkg/config"
@@ -110,6 +111,10 @@ func toFloat64(v any) (float64, bool) {
 		return float64(n), true
 	case int64:
 		return float64(n), true
+	case string:
+		if f, err := strconv.ParseFloat(n, 64); err == nil {
+			return f, true
+		}
 	}
 	return 0, false
 }
@@ -130,6 +135,11 @@ func clamp100(v float64) float64 {
 	if v < 0 {
 		v = 0
 	}
+	return round2(v)
+}
+
+// round2 redondea un float64 a 2 decimales.
+func round2(v float64) float64 {
 	return math.Round(v*100) / 100
 }
 
@@ -269,6 +279,11 @@ func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request
 			if err == nil {
 				requests[i].CorrectiveDate = t.In(loc).Format("2006-01-02 15:04:05")
 			}
+		}
+
+		// Redondear y formatear el valor de uso (como string para mantener 33.30)
+		if usedVal, ok := toFloat64(requests[i].UsedValue); ok {
+			requests[i].UsedValue = fmt.Sprintf("%.2f", usedVal)
 		}
 
 		// Calcular progreso DESPUÉS de la conversión de zona horaria
