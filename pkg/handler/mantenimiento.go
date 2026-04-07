@@ -16,8 +16,7 @@ import (
 )
 
 type MaintenanceHandler struct {
-	odoo    *data.OdooClient
-	odooDev *data.OdooClient
+	odoo *data.OdooClient
 }
 
 type GroupedRequestsWithTeam struct {
@@ -32,24 +31,11 @@ func NewMaintenanceHandler(cfg *config.Config) (*MaintenanceHandler, error) {
 		return nil, fmt.Errorf("error connecting to Odoo Prod: %w", err)
 	}
 
-	odooDev, err := data.NewOdooClient(cfg.OdooURLDev, cfg.OdooDBDev, cfg.OdooUsername, cfg.OdooPasswordDev)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to Odoo Dev: %w", err)
-	}
-
 	return &MaintenanceHandler{
-		odoo:    odoo,
-		odooDev: odooDev,
+		odoo: odoo,
 	}, nil
 }
 
-func (h *MaintenanceHandler) getOdooClient(r *http.Request) *data.OdooClient {
-	base := r.URL.Query().Get("base")
-	if base == "prod" {
-		return h.odoo
-	}
-	return h.odooDev
-}
 
 func (h *MaintenanceHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 	response.SetupCORS(w)
@@ -58,7 +44,7 @@ func (h *MaintenanceHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := h.getOdooClient(r)
+	client := h.odoo
 	teams, err := client.GetMaintenanceTeams()
 	if err != nil {
 		log.Printf("Error [ListTeams]: %v", err)
@@ -243,7 +229,7 @@ func (h *MaintenanceHandler) ListRequests(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	client := h.getOdooClient(r)
+	client := h.odoo
 
 	// Obtener todos los equipos de mantenimiento
 	teams, err := client.GetMaintenanceTeams()
@@ -354,7 +340,7 @@ func (h *MaintenanceHandler) ListEquipment(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	client := h.getOdooClient(r)
+	client := h.odoo
 	equipment, err := client.GetMaintenanceEquipment()
 	if err != nil {
 		log.Printf("Error [ListEquipment]: %v", err)
